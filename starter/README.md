@@ -1,3 +1,1 @@
-# Purpose of this Folder
-
-This folder should contain the scaffolded project files to get a student started on their project. This repo will be added to the Classroom for students to use, so please do not have any solutions in this folder.
+This folder contains the System Requirements Speficification (SysRS) document template. You can use google docs/MS Word to create your document and then submit as PDF. Inside the starter template you will see each part of the document explaining what it should contain.
