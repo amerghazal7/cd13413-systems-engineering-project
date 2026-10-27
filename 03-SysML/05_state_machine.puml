@@ -59,4 +59,9 @@ Maint : sirens muted, sensors reported only
 Disarmed --> Maint : installer login
 Maint --> Disarmed : exit test mode
 Op --> [*] : shutdown (admin)
+note right of Fault
+  Degraded is orthogonal: the system keeps
+  its armed state while a fault is present.
+  Entry/exit delay defaults: 30 s (FR-DW-02).
+end note
 @enduml

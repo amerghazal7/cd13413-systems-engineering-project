@@ -64,4 +64,9 @@ RE --> CBK : encrypted\nbackup / OTA
 USR --> APP
 USR --> WEB
 USR --> KP
+note left of RT
+  Only outbound connections leave
+  the house: no port forwarding
+  on the home router (FR-RM-01).
+end note
 @enduml

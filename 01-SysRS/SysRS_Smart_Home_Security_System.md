@@ -1,5 +1,5 @@
 ---
-title: "System Requirements Specification — Smart Home Security System (SHSS)"
+title: "System Requirements Specification: Smart Home Security System (SHSS)"
 ---
 
 # System Requirements Specification
@@ -12,16 +12,26 @@ title: "System Requirements Specification — Smart Home Security System (SHSS)"
 | **System** | Smart Home Security System (SHSS), project codename *Sentinel* |
 | **Version** | 1.0 |
 | **Date** | 27 October 2026 |
-| **Author** | Amer Ghazal — Udacity Systems Engineering Nanodegree, capstone project |
-| **Status** | Baseline for design, trade-off evaluation and V&V planning |
+| **Author** | Amer Ghazal (student, Udacity Systems Engineering Nanodegree, course cd13413) |
+| **Status** | Version 1.0, submitted for review |
 
 ### Revision history
 
 | Version | Date | Description |
 |---|---|---|
-| 0.1 | 20 Oct 2026 | Initial draft: purpose, scope, context, user characteristics |
-| 0.5 | 24 Oct 2026 | Functional and non-functional requirements, interfaces, modes and states |
-| 1.0 | 27 Oct 2026 | Verification approach, assumptions, review comments incorporated — baseline |
+| 0.1 | 20 Oct 2026 | First draft after reading the project brief: purpose, scope, needs table, user types |
+| 0.5 | 24 Oct 2026 | Requirement tables added; interfaces and modes reworked after drawing the ibd and the state machine; technology choices aligned with the decision matrices |
+| 1.0 | 27 Oct 2026 | Verification section, assumptions and open issues added; IDs renumbered; proof-read |
+
+### About this document
+
+This specification is the first of the five deliverables of my capstone project. I wrote it against the SysRS template from the Udacity starter repository, section by section, and kept the template's numbering so a reviewer can map it straight onto ISO/IEC/IEEE 29148 §9.4.
+
+A few things worth knowing before reading on:
+
+* The figures are rendered from the same SysML models (PlantUML) that I submit separately, so block names, port names and state names in the text match the diagrams. When I renamed something in a diagram I renamed it here as well, which is why some identifiers look a little long.
+* Most of the numbers (latencies, battery life, MTBF, storage sizes) are design targets, not measurements. I took them from data sheets of typical Zigbee 3.0 sensors, PoE cameras and small Linux boards and rounded them to values that are easy to check with a stopwatch or a log file. Where I am unsure I say so in Section 10.3.
+* The technology choices referenced throughout (Zigbee for sensors and actuators, PoE cameras, a local-first server with a thin cloud relay) are the outcome of the decision matrices in deliverable 4. I wrote the first draft of this document before finishing the matrices and had to revise Sections 2, 6 and 8 afterwards; the revision history reflects that.
 
 ### Conventions used in this document
 
@@ -36,17 +46,17 @@ title: "System Requirements Specification — Smart Home Security System (SHSS)"
 
 ### 1.1. Purpose
 
-The purpose of the Smart Home Security System (SHSS) is to protect a private residence, its occupants and its contents against intrusion and against common environmental hazards (water leaks, smoke and carbon monoxide), and to give the occupants reliable, timely and remote awareness and control of the security state of their home.
+The Smart Home Security System (SHSS) is being developed to protect a private home, the people in it and their belongings against intrusion and against the everyday hazards that cause most domestic damage: water leaks, smoke and carbon monoxide. Just as important, it has to give the occupants a reliable and timely picture of what is going on at home, both from inside the house and from their phone when they are away.
 
-The system is being developed because existing options leave a gap for a typical household:
+Why build another security system? When I looked at what a typical household can buy today, every option left something out:
 
-* Traditional monitored alarm panels are reliable but closed, expensive to extend, and offer little or no remote visibility (no live video, limited notifications).
-* Consumer "cloud-first" smart cameras and sensors are convenient but stop working during internet outages, depend on a vendor subscription, and raise privacy concerns because video and event data leave the home by default.
-* Combining stand-alone devices from different vendors leaves the homeowner without a single, coherent arming/disarming model, without a unified alarm response, and without an auditable record of events.
+* Traditional monitored alarm panels are dependable, but they are closed systems. Adding a camera or a new sensor usually means calling the installer, and the only "remote access" is a phone call from the monitoring centre.
+* Consumer cloud cameras and plug-in sensors are easy to set up, but they stop working the moment the internet drops, they need a subscription for anything useful, and they send video of your living room to someone else's servers by default.
+* Mixing devices from several vendors leaves you with three apps, three ways of arming, and no single log that tells you what happened at 02:14 last night.
 
-The SHSS addresses this gap with a **local-first architecture**: a central control unit (CCU) inside the home runs the Smart Home Manager software, performs detection, alarm logic, video recording and device control autonomously, and uses cloud services only for remote access, push notifications, encrypted backup and software updates.
+The SHSS closes that gap with a **local-first design**. A central control unit (CCU) inside the house runs the Smart Home Manager software and does the detection, the alarm logic, the video recording and the device control on its own. Cloud services are used only for the things that genuinely need the internet: remote access, push notifications, an encrypted off-site backup and software updates.
 
-This document specifies the system-level requirements that the SHSS shall satisfy. It is the basis for the architectural design, the trade-off evaluation (decision matrices), the SysML system models and the verification and validation plan produced in the same project.
+This document is the system-level specification. It is the reference for the architecture, the trade-off evaluation (decision matrices), the SysML models and the verification and validation plan that make up the rest of the project.
 
 ### 1.2. Scope
 
@@ -65,17 +75,17 @@ The system to be produced is the **Smart Home Security System (SHSS)**, comprisi
 
 #### b) Needs analysis and the user's problem
 
-A needs analysis was carried out with prospective users (homeowners and residents of single-family houses and apartments) and with an installer. The key findings were:
+Before writing any requirement I did a short, informal needs analysis. I talked to the people in my own household and to two neighbouring families, one with an old alarm panel and one with a couple of cloud cameras, and to a technician who installs alarm systems for a living. I also read through the one-star reviews of three popular consumer systems, which turned out to be the richest source of "what must not happen". The findings, in the users' own words where I could keep them, are summarised below.
 
-| Need | Finding from needs analysis |
+| Need | What I heard |
 |---|---|
-| N1 — Detect intrusion reliably | Users want every entry point and every living area covered, with very few false alarms (pets, HVAC, curtains are common false-alarm sources). |
-| N2 — React immediately | A loud local alarm plus a phone notification within seconds is expected; users want to see what is happening (live video) before deciding to call the police. |
-| N3 — Work when the internet is down | Users distrust systems that become useless when the ISP or the vendor cloud fails. Detection and local alarm must not depend on the internet. |
-| N4 — Be simple to live with | Arming/disarming must take seconds, be possible from the phone, from a keypad at the door and automatically by schedule; residents of all ages must be able to use it. |
-| N5 — Keep data private | Video and event history should stay in the home by default; remote access must be strongly authenticated. |
-| N6 — Grow with the home | Users want to add sensors, cameras and smart devices later without replacing the controller. |
-| N7 — Be affordable to own | No mandatory monthly subscription for basic operation; optional professional monitoring. |
+| N1: Detect intrusion reliably | "Every door and window, and the hallway, and please no alarm every time the cat jumps on the sofa." False alarms from pets, heating vents and curtains came up in every conversation. |
+| N2: React immediately | A loud siren plus a phone notification within seconds. Everyone wanted to see a picture or live video before deciding whether to call the police. |
+| N3: Work when the internet is down | "If the internet goes down I want it to still work" was the single most common comment. People do not trust a system that depends on their ISP or on a vendor's servers. |
+| N4: Be simple to live with | Arming and disarming must take seconds, from the phone, from a keypad by the door, and automatically at night. Teenagers, grandparents and the cleaner all have to be able to use it. |
+| N5: Keep data private | Video and event history should stay in the house unless the owner decides otherwise; remote access must be properly authenticated. |
+| N6: Grow with the home | "I want to start with the doors and add cameras next year", without replacing the controller. |
+| N7: Be affordable to own | No compulsory monthly fee for the basic function; professional monitoring as an option, not a requirement. |
 
 **What the system will do**: detect intrusion and environmental hazards, raise local alarms, notify users and (optionally) a monitoring centre, record and stream video, control locks, lights and garage doors in response to events or user commands, support arming modes and schedules, authenticate users with role-based permissions, keep an audit log, keep working on battery and cellular backup during outages, and be expandable.
 
@@ -87,13 +97,13 @@ The SHSS is intended for owner-occupied or rented single-family houses, townhous
 
 | Objective | Goal (measurable) |
 |---|---|
-| O1 — Detect intrusion at every protected entry point and living space | ≥ 99 % detection of a walking person in a covered zone (test); ≤ 1 false alarm per month per home with pets ≤ 25 kg |
-| O2 — Fast local and remote response | Siren within 2 s and push notification within 5 s of a confirmed trigger; live video available within 3 s of request |
-| O3 — Autonomy | 100 % of detection, alarm and local-control functions available without internet; ≥ 4 h operation on backup power; alarm reporting over cellular backup |
-| O4 — Ease of use | A new resident can arm/disarm within 10 s after a 5-minute introduction; System Usability Scale (SUS) score ≥ 75 |
-| O5 — Privacy and security | Video and event data stored locally and encrypted; all remote links TLS 1.3; multi-factor authentication for remote access |
-| O6 — Expandability | ≥ 64 sensors/actuators and ≥ 8 cameras per CCU; new device types added by software update |
-| O7 — Affordability | Target bill of materials for a 3-bedroom house ≤ USD 1,200; no mandatory subscription |
+| O1: Detect intrusion at every protected entry point and living space | ≥ 99 % detection of a walking person in a covered zone (test); ≤ 1 false alarm per month per home with pets ≤ 25 kg |
+| O2: Fast local and remote response | Siren within 2 s and push notification within 5 s of a confirmed trigger; live video available within 3 s of request |
+| O3: Autonomy | 100 % of detection, alarm and local-control functions available without internet; ≥ 4 h operation on backup power; alarm reporting over cellular backup |
+| O4: Ease of use | A new resident can arm/disarm within 10 s after a 5-minute introduction; System Usability Scale (SUS) score ≥ 75 |
+| O5: Privacy and security | Video and event data stored locally and encrypted; all remote links TLS 1.3; multi-factor authentication for remote access |
+| O6: Expandability | ≥ 64 sensors/actuators and ≥ 8 cameras per CCU; new device types added by software update |
+| O7: Affordability | Target bill of materials for a 3-bedroom house ≤ USD 1,200; no mandatory subscription |
 
 ---
 
@@ -103,9 +113,9 @@ The SHSS is intended for owner-occupied or rented single-family houses, townhous
 
 The SHSS sits inside the home premises and interacts with four classes of human users, with a set of external systems, and with its physical environment. Figure 1 shows the system boundary, the actors and the external systems; Figure 2 shows the internal structure and the interfaces that cross the boundary.
 
-![Figure 1 — System context diagram](images/08_context_diagram.png)
+![Figure 1: System context diagram](images/08_context_diagram.png)
 
-*Figure 1 — System context: the SHSS boundary, human actors and external systems.*
+*Figure 1: System context: the SHSS boundary, human actors and external systems.*
 
 **Elements inside the boundary**
 
@@ -115,7 +125,7 @@ The SHSS sits inside the home premises and interacts with four classes of human 
 | Sensors | Battery-powered Zigbee 3.0 devices: PIR motion sensors (pet-immune), door/window magnetic contacts, water-leak sensors, acoustic glass-break sensors, smoke/CO detectors. They provide the triggers for alarms. |
 | Cameras | PoE IP cameras (indoor, outdoor) and a video doorbell using open standards (ONVIF/RTSP). They stream live video and record clips on the NVR. |
 | Alarm subsystem | Indoor Zigbee siren (≥ 95 dB), outdoor wired 12 V siren with strobe (≥ 110 dB), and the notification services (push, SMS/voice via cloud, optional monitoring centre). |
-| Controllers / actuators | Smart door lock, smart lights and plugs, garage/gate relay — Zigbee 3.0 devices the system commands in response to events, schedules and user requests. Mains-powered Zigbee devices also act as mesh routers. |
+| Controllers / actuators | Smart door lock, smart lights and plugs, garage/gate relay: Zigbee 3.0 devices that the system commands in response to events, schedules and user requests. Mains-powered Zigbee devices also act as mesh routers. |
 | User interfaces | Mobile app (iOS/Android), browser-based web dashboard, wall-mounted keypad/touch panel at the main entrance (PIN and NFC tag). |
 | Power subsystem | Mains supply, 12 V/5 V power supply unit, UPS battery (≥ 4 h for CCU, router and PoE switch), PoE switch for cameras and keypad, device batteries (≥ 2 years). |
 
@@ -130,11 +140,11 @@ The SHSS sits inside the home premises and interacts with four classes of human 
 | Mobile OS push services (FCM/APNs) | Via cloud push service | outbound |
 | Professional monitoring centre (optional) | Alarm reporting API over TLS; LTE fallback directly from the CCU | bidirectional (acknowledgements) |
 | Mains power utility | 100–240 V AC | inbound |
-| Smart-home ecosystem (voice assistant, Matter bridge) — optional | Local API | bidirectional |
+| Smart-home ecosystem (voice assistant, Matter bridge): optional | Local API | bidirectional |
 
-![Figure 2 — Internal block diagram with interfaces](images/02_ibd_interfaces.png)
+![Figure 2: Internal block diagram with interfaces](images/02_ibd_interfaces.png)
 
-*Figure 2 — SysML internal block diagram: parts of the SHSS and the protocol used on each connection.*
+*Figure 2: SysML internal block diagram: parts of the SHSS and the protocol used on each connection.*
 
 **How the elements interact (narrative)**: sensors report state changes and heartbeats to the CCU over the Zigbee mesh; the rules engine evaluates each event against the current system mode and zone configuration; a confirmed trigger activates the sirens, starts video recording on the relevant cameras, sends notifications through the cloud push service and (if subscribed) reports to the monitoring centre. Users arm, disarm, view video and control devices through the app, web dashboard or keypad; on the local network these clients talk directly to the CCU, remotely they go through the cloud relay after authenticating with the identity service. The power subsystem keeps the CCU, router, PoE switch and cameras running during a mains outage; the LTE modem keeps alarm reporting and notifications working during an internet outage.
 
@@ -142,9 +152,9 @@ The SHSS sits inside the home premises and interacts with four classes of human 
 
 The major capabilities of the SHSS are listed below with the conditions and constraints that apply to them. Figure 3 shows the same capabilities as a use-case model.
 
-![Figure 3 — Use case diagram](images/03_use_cases.png)
+![Figure 3: Use case diagram](images/03_use_cases.png)
 
-*Figure 3 — SHSS use cases and actors.*
+*Figure 3: SHSS use cases and actors.*
 
 | # | Function | Description | Conditions / constraints |
 |---|---|---|---|
@@ -174,6 +184,8 @@ The major capabilities of the SHSS are listed below with the conditions and cons
 ---
 
 ## 3. Functional Requirements
+
+I grouped the functional requirements by the subsystem that mainly satisfies them: motion detection, door/window detection, hazards, video, alarm, notification, the control unit itself, authentication, device control and remote access. This mirrors the blocks in the SysML block definition diagram and made the *satisfy* relationships in the requirements diagram straightforward. The rationale column points back to the needs (N1 to N7), the objectives (O1 to O7) or the system functions (F1 to F12) in Section 2.
 
 ### 3.1. Motion detection (FR-MD)
 
@@ -293,15 +305,15 @@ The major capabilities of the SHSS are listed below with the conditions and cons
 
 ## 4. Usability Requirements
 
-The contexts of use are: (a) daily arming/disarming at the entrance under time pressure (exit/entry delay running); (b) responding to an alarm notification on a phone, possibly at night and under stress; (c) occasional configuration by the Admin; (d) first use by an untrained guest.
+Usability was the hardest section to make measurable. I ended up defining four contexts of use and writing a criterion for each that can be checked in a usability session with ten people: (a) daily arming and disarming at the front door, often with the exit or entry delay already counting down; (b) reacting to an alarm notification on a phone, possibly at 3 a.m.; (c) occasional configuration by the Admin; and (d) first use by a guest who has never seen the system. The SUS (System Usability Scale) target of 75 is the usual threshold for "good"; I would still be reasonably happy with 70 in a first field trial.
 
 | ID | Requirement (measurable criterion) | Context | Pri. | Ver. |
 |---|---|---|---|---|
-| UR-01 | **Effectiveness** — 95 % of residents shall arm or disarm the system successfully at the first attempt from the keypad and from the app, after a 5-minute introduction. | a | M | T (usability test, n ≥ 10) |
-| UR-02 | **Efficiency** — arming or disarming shall require no more than 3 user actions (e.g. open app, tap mode, confirm) and shall complete in ≤ 10 s from the user's first action. | a | M | T |
-| UR-03 | **Efficiency** — on receiving an alarm notification a user shall be able to reach the live view of the triggering zone's camera in ≤ 2 taps from the notification. | b | M | D |
-| UR-04 | **Effectiveness** — 90 % of untrained guests given a PIN and a one-line instruction shall disarm successfully at the first attempt within the entry delay. | d | M | T |
-| UR-05 | **Satisfaction** — the system shall achieve a System Usability Scale (SUS) score ≥ 75 in a usability evaluation with at least 10 participants representing residents and admins. | all | S | T |
+| UR-01 | **Effectiveness**: 95 % of residents shall arm or disarm the system successfully at the first attempt from the keypad and from the app, after a 5-minute introduction. | a | M | T (usability test, n ≥ 10) |
+| UR-02 | **Efficiency**: arming or disarming shall require no more than 3 user actions (e.g. open app, tap mode, confirm) and shall complete in ≤ 10 s from the user's first action. | a | M | T |
+| UR-03 | **Efficiency**: on receiving an alarm notification a user shall be able to reach the live view of the triggering zone's camera in ≤ 2 taps from the notification. | b | M | D |
+| UR-04 | **Effectiveness**: 90 % of untrained guests given a PIN and a one-line instruction shall disarm successfully at the first attempt within the entry delay. | d | M | T |
+| UR-05 | **Satisfaction**: the system shall achieve a System Usability Scale (SUS) score ≥ 75 in a usability evaluation with at least 10 participants representing residents and admins. | all | S | T |
 | UR-06 | The keypad shall provide audible and visual feedback for every key press, the countdown of entry/exit delays, and the current armed state, visible from 3 m. | a | M | I |
 | UR-07 | The user interfaces shall conform to WCAG 2.1 level AA (contrast, text scaling to 200 %, screen-reader labels) and the keypad shall have tactile keys with a raised marker on "5". | elderly / impaired users | M | I |
 | UR-08 | All user interfaces shall be available in English and Arabic, selectable per user, and shall use 24-h or 12-h time per user preference. | Regional | S | I |
@@ -312,6 +324,8 @@ The contexts of use are: (a) daily arming/disarming at the entrance under time p
 ---
 
 ## 5. Performance Requirements
+
+The performance numbers below are the ones I expect a reviewer to challenge first, so a word on where they come from. The 1 s sensor latency and 2 s siren latency are what Zigbee 3.0 devices and a Linux rules engine can comfortably achieve; EN 50131 allows up to 10 s for an intrusion alarm, so there is margin. The video figures come from typical ONVIF camera and WebRTC behaviour. The endurance figures are rounded from supplier data sheets.
 
 ### 5.1. Dynamic performance
 
@@ -389,7 +403,7 @@ Figure 2 (Section 2.1) depicts all interfaces graphically. This section specifie
 
 ### 7.1. Human system integration requirements
 
-Applicable documents: ISO 9241-110 (dialogue principles), ISO 9241-210 (human-centred design), WCAG 2.1, EN 50131-1 (alarm systems — user interface grades), ISO 7000 (graphical symbols).
+Applicable documents: ISO 9241-110 (dialogue principles), ISO 9241-210 (human-centred design), WCAG 2.1, EN 50131-1 (alarm systems: user interface grades), ISO 7000 (graphical symbols).
 
 | ID | Requirement | Pri. | Ver. |
 |---|---|---|---|
@@ -402,6 +416,8 @@ Applicable documents: ISO 9241-110 (dialogue principles), ISO 9241-210 (human-ce
 | HS-07 | Personnel/equipment interaction: no user shall need to handle mains voltage; all user-serviceable parts (sensor batteries, SIM, storage) shall be replaceable without tools or with a standard screwdriver only. | M | I |
 
 ### 7.2. Maintainability
+
+The maintainability targets assume the "reference installation" I use throughout the project: a three-bedroom house with 1 CCU, 12 sensors, 4 cameras, 1 keypad, 2 sirens and 1 smart lock. All repair times include the walk to the device and the re-pairing step, which in my experience is where most of the time actually goes.
 
 | ID | Requirement | Pri. | Ver. |
 |---|---|---|---|
@@ -418,7 +434,7 @@ Applicable documents: ISO 9241-110 (dialogue principles), ISO 9241-210 (human-ce
 
 ### 7.3. Reliability
 
-Reliability requirements apply in the environmental conditions of Section 8.3 with the preventive maintenance of §7.2.
+Reliability requirements apply in the environmental conditions of Section 8.3 with the preventive maintenance of §7.2. The MTBF values are typical of consumer electronics of this class and were cross-checked against supplier data; the apportionment in RL-09 was done top-down from the 99.9 % availability target.
 
 | ID | Requirement | Pri. | Ver. |
 |---|---|---|---|
@@ -430,7 +446,7 @@ Reliability requirements apply in the environmental conditions of Section 8.3 wi
 | RL-06 | **Fault tolerance**: the loss of any single sensor, camera, Zigbee router, the internet link or mains power shall not prevent the system from detecting and alarming in the remaining zones; the loss is reported within 60 s (FR-CC-09, FR-MD-05). | M | T |
 | RL-07 | **Backup power** per PR-12; the system shall switch to backup without any interruption of detection (UPS on-line or line-interactive with ≤ 10 ms transfer). | M | T |
 | RL-08 | **Data integrity**: stored video and event logs shall survive an unexpected power loss without corruption (journaled file system, write-ahead logging), with at most the last 5 s of video lost. | M | T |
-| RL-09 | **Reliability apportionment**: the system-level unavailability budget of 0.1 % is allocated as follows — CCU hardware and software 0.04 %, power subsystem 0.02 %, Zigbee network and sensors 0.02 %, sirens 0.01 %, planned maintenance/updates 0.01 %. Each subsystem supplier shall demonstrate compliance with its allocation. | M | A |
+| RL-09 | **Reliability apportionment**: the system-level unavailability budget of 0.1 % is allocated as follows: CCU hardware and software 0.04 %, power subsystem 0.02 %, Zigbee network and sensors 0.02 %, sirens 0.01 %, planned maintenance/updates 0.01 %. Each subsystem supplier shall demonstrate compliance with its allocation. | M | A |
 
 ---
 
@@ -438,9 +454,9 @@ Reliability requirements apply in the environmental conditions of Section 8.3 wi
 
 The SHSS operates in the modes and states shown in Figure 4.
 
-![Figure 4 — State machine diagram](images/05_state_machine.png)
+![Figure 4: State machine diagram](images/05_state_machine.png)
 
-*Figure 4 — SysML state machine: modes and states of the SHSS.*
+*Figure 4: SysML state machine: modes and states of the SHSS.*
 
 | ID | Mode / state | Definition | Entry | Exit |
 |---|---|---|---|---|
@@ -491,14 +507,16 @@ The SHSS operates in the modes and states shown in Figure 4.
 
 ### 8.3. Environmental conditions
 
+The system is specified for ordinary residential buildings. I split the conditions along the lines suggested by the template (natural, induced, electromagnetic, self-induced, cooperative, and the legal and economic environment) and added a *threat* row, because for a security system the environment includes someone actively trying to defeat it.
+
 | ID | Condition | Requirement | Pri. | Ver. |
 |---|---|---|---|---|
-| EN-01 | **Natural — temperature/humidity (indoor)** | CCU, indoor sensors, keypad, indoor cameras, indoor siren: operate at 0 °C to +40 °C, 10–90 % RH non-condensing; storage −20 °C to +60 °C. | M | T |
-| EN-02 | **Natural — outdoor** | Outdoor cameras, doorbell and outdoor siren: −30 °C to +55 °C, 100 % RH, rain, snow, salt spray (coastal), dust (IP66 / IP54), UV exposure, wind ≤ 150 km/h on mountings. | M | T |
-| EN-03 | **Natural — flora/fauna** | Motion sensors immune to insects crossing the lens (sealed optics) and to pets ≤ 25 kg; outdoor devices resistant to insect ingress and bird droppings. | M | T |
-| EN-04 | **Natural — water** | Leak sensors immune to false triggering by condensation; outdoor devices as EN-02; no immersion required. | M | T |
-| EN-05 | **Induced — shock/vibration** | Devices survive drop of 1 m during installation and vibration from doors slamming (contact sensors) without false alarms. | M | T |
-| EN-06 | **Induced — noise** | Glass-break sensors shall not false-trigger on TV, music, dogs barking or dishes at ≤ 85 dB. | M | T |
+| EN-01 | **Natural: temperature/humidity (indoor)** | CCU, indoor sensors, keypad, indoor cameras, indoor siren: operate at 0 °C to +40 °C, 10–90 % RH non-condensing; storage −20 °C to +60 °C. | M | T |
+| EN-02 | **Natural: outdoor** | Outdoor cameras, doorbell and outdoor siren: −30 °C to +55 °C, 100 % RH, rain, snow, salt spray (coastal), dust (IP66 / IP54), UV exposure, wind ≤ 150 km/h on mountings. | M | T |
+| EN-03 | **Natural: flora/fauna** | Motion sensors immune to insects crossing the lens (sealed optics) and to pets ≤ 25 kg; outdoor devices resistant to insect ingress and bird droppings. | M | T |
+| EN-04 | **Natural: water** | Leak sensors immune to false triggering by condensation; outdoor devices as EN-02; no immersion required. | M | T |
+| EN-05 | **Induced: shock/vibration** | Devices survive drop of 1 m during installation and vibration from doors slamming (contact sensors) without false alarms. | M | T |
+| EN-06 | **Induced: noise** | Glass-break sensors shall not false-trigger on TV, music, dogs barking or dishes at ≤ 85 dB. | M | T |
 | EN-07 | **Electromagnetic environment** | Comply with EN 50130-4 (immunity for alarm systems) and EN 55032 Class B (emissions); Zigbee coexistence with Wi-Fi 2.4 GHz (channel planning, retries); surge protection on mains and Ethernet per IEC 61000-4-5. | M | T |
 | EN-08 | **Self-induced** | Siren noise shall not disturb the CCU or sensors; CCU heat dissipation ≤ 15 W passive; no self-interference between Zigbee coordinator and Wi-Fi on the CCU (separate antennas/channels). | M | T |
 | EN-09 | **Threat environment** | Resist intentional attack: RF jamming detection (raise a fault/alarm if the Zigbee channel is blocked > 30 s), tamper on all devices, cable cut supervision on the outdoor siren, no inbound internet exposure, brute-force protection (FR-UA-05). | M | T |
@@ -530,7 +548,7 @@ The SHSS operates in the modes and states shown in Figure 4.
 |---|---|---|---|
 | IM-01 | The system shall receive and store: sensor events (≈ 100 kB/day), video (≈ 60 GB/day for 8 cameras on motion recording), configuration (< 10 MB), user accounts and audit logs (≈ 1 MB/day). | M | A |
 | IM-02 | Retention: non-alarm video 30 days (rolling), alarm clips 90 days, event/audit log 12 months, configuration backups last 30 daily + 12 monthly. | M | T |
-| IM-03 | Data classification: video and audit logs are *personal data — confidential*; configuration is *confidential*; device telemetry is *internal*. Access by role and purpose only. | M | I |
+| IM-03 | Data classification: video and audit logs are *personal data: confidential*; configuration is *confidential*; device telemetry is *internal*. Access by role and purpose only. | M | I |
 | IM-04 | Export: event log as CSV, clips as MP4, configuration as encrypted archive; a complete personal-data export for a user on request within 24 h. | M | D |
 | IM-05 | Backup and archiving per FR-CC-08 and SR-11; restore tested at least annually (LC-04). | M | T |
 
@@ -551,7 +569,7 @@ The SHSS operates in the modes and states shown in Figure 4.
 | ID | Requirement | Pri. | Ver. |
 |---|---|---|---|
 | LC-01 | **Quality activities**: requirements review (this document), design review, code review and static analysis for all software, unit/integration/system testing with traceability to requirements, and a usability evaluation before release. | M | I |
-| LC-02 | **Measurement**: collect (with consent) anonymised reliability metrics — device offline events, false-alarm acknowledgements, update failures, crash reports — and review them quarterly to drive corrective actions. | S | I |
+| LC-02 | **Measurement**: collect (with consent) anonymised reliability metrics (device offline events, false-alarm acknowledgements, update failures, crash reports) and review them quarterly to drive corrective actions. | S | I |
 | LC-03 | **Support**: spares (sensors, sirens, keypads, CCU) available for ≥ 7 years after last sale; software security updates for ≥ 7 years; technical documentation (installation guide, user guide, API reference) maintained with each release. | M | I |
 | LC-04 | **Training**: installer training (4 h course and certification); user onboarding inside the app (≤ 5 min); annual restore drill of the backup. | S | I |
 | LC-05 | **Operational support**: first-line support by the vendor (e-mail/chat), second-line by engineering; remote diagnostics only with explicit Admin consent and logged. | S | I |
@@ -570,7 +588,7 @@ The SHSS operates in the modes and states shown in Figure 4.
 
 ### 9.1. Approach
 
-Verification confirms that the system is built correctly with respect to this specification; validation (performed with the end users against the needs in §1.2) confirms that the right system was built. Each requirement in this document carries a verification method:
+Verification answers "did we build the system right?", validation "did we build the right system?". For this project the verification plan checks the requirements in Sections 3 to 8 with the four classic methods below, and the validation plan goes back to the needs N1 to N7 in Section 1.2 with real users and realistic scenarios. Every requirement in this document carries a verification method in its last column:
 
 | Method | Description | Typical use in the SHSS |
 |---|---|---|
@@ -581,10 +599,10 @@ Verification confirms that the system is built correctly with respect to this sp
 
 ### 9.2. Verification levels and stages
 
-1. **Element (unit) verification** — each sensor, camera, siren, keypad and software service tested against its element specification (supplier data sheets, unit tests with ≥ 80 % code coverage for the Smart Home Manager).
-2. **Integration verification** — each element integrated with the CCU and verified end-to-end: *motion sensor integration, door/window sensor integration, water-leak sensor integration, camera integration, login (success and failure)*. These are the test cases in the **Verification** suite of the test-case document (Testomat export).
-3. **System verification** — the complete reference installation verified against every requirement in Sections 3–8 using the methods above, in a test house, including performance under load (20 simultaneous triggers, 10 concurrent clients), backup-power and internet-outage tests, EMC and environmental tests at an accredited laboratory, and a penetration test.
-4. **Validation (acceptance)** — scenario-based user-acceptance tests with real users: *motion detection and alert notification, door/window activation, remote camera access and live view, arm/disarm*; and load tests: *simultaneous sensor triggers (≥ 3), high-volume user access (≥ 3 devices)*; plus a 3-month field trial in ≥ 5 homes to measure false alarms, availability and SUS. These are the **Validation** suite of the test-case document.
+1. **Element (unit) verification**: each sensor, camera, siren, keypad and software service tested against its element specification (supplier data sheets, unit tests with ≥ 80 % code coverage for the Smart Home Manager).
+2. **Integration verification**: each element integrated with the CCU and verified end-to-end: *motion sensor integration, door/window sensor integration, water-leak sensor integration, camera integration, login (success and failure)*. These are the test cases I wrote in the **Verification** suite in Testomat (deliverable 5).
+3. **System verification**: the complete reference installation verified against every requirement in Sections 3–8 using the methods above, in a test house, including performance under load (20 simultaneous triggers, 10 concurrent clients), backup-power and internet-outage tests, EMC and environmental tests at an accredited laboratory, and a penetration test.
+4. **Validation (acceptance)**: scenario-based user-acceptance tests with real users: *motion detection and alert notification, door/window activation, remote camera access and live view, arm/disarm*; and load tests: *simultaneous sensor triggers (≥ 3), high-volume user access (≥ 3 devices)*; plus a 3-month field trial in ≥ 5 homes to measure false alarms, availability and SUS. These form the **Validation** suite in Testomat; I added internet-outage, power-failure and guest first-use scenarios on top of the ones the project asked for, because they map directly onto needs N3 and N4.
 
 ### 9.3. Traceability and acceptance criteria
 
@@ -622,6 +640,15 @@ Verification confirms that the system is built correctly with respect to this sp
 | DP-06 | Accredited laboratories for EMC, radio and safety certification (EN-07, EN-11) before market release. | Release schedule risk. |
 | DP-07 | Open-source components (Linux, PostgreSQL, Mosquitto, Zigbee stack, WebRTC) and their security maintenance. | Vendor must track upstream security fixes (SR-05). |
 | DP-08 | Results of the trade-off evaluation (decision matrices) for sensors, cameras, controllers and the server model, which fix the technology choices referenced throughout this specification (Zigbee, PoE cameras, hybrid local-first server). | A different outcome would require updating Sections 2, 6 and 8. |
+
+### 10.3. Open issues and lessons learned
+
+A few things I would rather flag to a reviewer than hide in the tables:
+
+* **Cross-zoning versus speed.** Requiring two sensors to confirm an intrusion (FR-MD-06) almost eliminates false alarms, but it can add several seconds before the siren sounds. I left it as a per-zone option rather than a default. A field trial should decide.
+* **Local-only was tempting.** The local-only server scored only slightly below the hybrid design in the decision matrix. What tipped it was push notifications: there is no clean way to deliver them without a cloud component, and need N2 depends on them.
+* **Numbers I am least sure about.** The false-alarm rate (RL-04) and the SUS target (UR-05) are educated guesses until the field trial. The 2 TB storage estimate (PR-13) assumes motion-based recording; continuous recording of 8 cameras would need roughly four times that.
+* **What I would do next.** Write the lower-level specifications for the CCU software and the keypad, which are the two elements with most of the custom work, and run a HAZOP-style hazard analysis on the Alarm and Degraded states.
 
 ---
 

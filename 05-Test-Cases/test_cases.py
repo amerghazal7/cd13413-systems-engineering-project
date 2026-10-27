@@ -22,7 +22,8 @@ dict(suite="Verification", id="TC-V-01", title="TC-V-01 Motion sensor integratio
          "Tamper event 'Hallway PIR – tamper' logged and a health/tamper notification is sent to the Admin."),
         ("Leave the sensor idle and observe the device page for 2 heartbeat intervals (≤ 60 min each, or shortened in test mode).",
          "Heartbeats are received; 'last seen' timestamp updates; sensor stays Online.")],
- expected="The test passes if the sensor pairs, every motion/tamper/heartbeat event is received by the CCU within 1 s, motion is ignored in Disarmed and raises the alarm in Armed Away. It fails if any event is missing, delayed > 1 s, or the alarm is not raised when armed."),
+ expected="The test passes if the sensor pairs, every motion/tamper/heartbeat event is received by the CCU within 1 s, motion is ignored in Disarmed and raises the alarm in Armed Away. It fails if any event is missing, delayed > 1 s, or the alarm is not raised when armed.",
+ notes="In test mode the heartbeat interval can be shortened to 1 min so that step 7 does not take two hours. The Zigbee coordinator log gives millisecond timestamps, which is easier than a stopwatch."),
 
 dict(suite="Verification", id="TC-V-02", title="TC-V-02 Door/window sensor integration", priority="high", type="Functional (integration)",
  reqs="FR-DW-01, FR-DW-02, FR-DW-03, FR-DW-05, FR-DW-06",
@@ -37,7 +38,7 @@ dict(suite="Verification", id="TC-V-02", title="TC-V-02 Door/window sensor integ
         ("Arm Away again, wait for exit delay, then open the living-room window (instant zone).", "Alarm raised immediately (siren within 2 s); push notification 'Intrusion – Living room window'."),
         ("Disarm, then leave the window open and request Arm Away from the app.", "App warns 'Living room window is open' and offers Bypass or Cancel; arming is refused unless bypassed."),
         ("Remove the window sensor from its mount.", "Tamper event logged and notification sent.")],
- expected="Pass if open/close events arrive within 1 s, the entry zone starts the entry delay and disarming within the delay prevents the alarm, the instant zone alarms immediately, open-zone arming is warned/blocked, and tamper is detected. Fail otherwise."),
+ expected="I treat this as passed when open/close events arrive within 1 s, the entry zone starts the entry delay and disarming within the delay prevents the alarm, the instant zone alarms immediately, open-zone arming is warned/blocked, and tamper is detected. Fail otherwise."),
 
 dict(suite="Verification", id="TC-V-03", title="TC-V-03 Water leak sensor integration", priority="high", type="Functional (integration)",
  reqs="FR-EH-01, FR-EH-03, FR-AL-03",
@@ -67,7 +68,8 @@ dict(suite="Verification", id="TC-V-04", title="TC-V-04 Security camera integrat
         ("Export the clip.", "MP4 file downloads and plays."),
         ("Unplug the camera's Ethernet cable.", "Within 30 s the dashboard shows the camera Offline and a health alert is sent to the Admin."),
         ("Reconnect the cable.", "Camera returns Online automatically within 60 s.")],
- expected="Pass if discovery, live view (≤ 3 s first frame), alarm clip with correct pre/post-roll, export and stream-loss detection (≤ 30 s) all work. Fail if any step misses its timing or the clip is missing/unprotected."),
+ expected="Pass if discovery, live view (≤ 3 s first frame), alarm clip with correct pre/post-roll, export and stream-loss detection (≤ 30 s) all work. Fail if any step misses its timing or the clip is missing/unprotected.",
+ notes="For the latency check in step 2, clap in front of the camera and count the seconds until the clap shows on screen; it is crude but repeatable."),
 
 dict(suite="Verification", id="TC-V-05", title="TC-V-05 Login functionality – correct credentials", priority="critical", type="Functional (security)",
  reqs="FR-UA-01, FR-UA-02, FR-UA-04, FR-UA-08, FR-UA-09",
@@ -95,7 +97,8 @@ dict(suite="Verification", id="TC-V-06", title="TC-V-06 Login functionality – 
         ("At the keypad, enter a wrong PIN 5 times.", "Keypad shows locked state and refuses input for 15 min; Admin notified."),
         ("Enter 5 more wrong PINs after the keypad lock ends (10 total).", "Keypad raises a tamper event; event logged and notification sent."),
         ("After 15 min, log in with the correct password.", "Login succeeds; event log shows all failures, the lockout and the final success with timestamps and source.")],
- expected="Pass if wrong credentials are rejected generically, the 5-failure lockout and Admin notification occur for both password and PIN, the keypad tamper fires at 10 failures, and everything is logged. Fail if login succeeds with wrong credentials, the lock is not applied, or the error reveals account existence."),
+ expected="Pass if wrong credentials are rejected generically, the 5-failure lockout and Admin notification occur for both password and PIN, the keypad tamper fires at 10 failures, and everything is logged. Fail if login succeeds with wrong credentials, the lock is not applied, or the error reveals account existence.",
+ notes="Run this after TC-V-05 so the account is known to be good, and wait out the 15 min lock before any other test that uses resident1."),
 
 dict(suite="Verification", id="TC-V-07", title="TC-V-07 Smart lock controller integration", priority="medium", type="Functional (integration)",
  reqs="FR-DC-01, FR-DC-02, FR-DC-03, FR-DC-04, PR-08",
@@ -123,7 +126,8 @@ dict(suite="Validation", id="TC-VAL-01", title="TC-VAL-01 Motion detection and a
         ("Homeowner chooses 'Silence siren – keep alarm' and then 'Call police' link.", "Siren stops; alarm stays recorded; dialer opens with the configured emergency number (not dialled during test)."),
         ("Ask the participant to rate the experience (1–5) for clarity of the notification and confidence that they could act.", "Rating ≥ 4 for both questions."),
         ("Repeat with the homeowner's dog (≤ 25 kg) walking through the room while armed, no human present.", "No alarm and no notification (pet immunity).")],
- expected="Pass if the siren sounds ≤ 2 s and the notification arrives ≤ 5 s with zone and snapshot, the user reaches live video in ≤ 2 taps, rates the experience ≥ 4/5, and the pet does not cause an alarm. Fail if timings are missed, the notification lacks actionable information, or a false alarm occurs."),
+ expected="Pass if the siren sounds ≤ 2 s and the notification arrives ≤ 5 s with zone and snapshot, the user reaches live video in ≤ 2 taps, rates the experience ≥ 4/5, and the pet does not cause an alarm. Fail if timings are missed, the notification lacks actionable information, or a false alarm occurs.",
+ notes="Agree the intruder's route and timing with the participant beforehand. The point is the participant's reaction to the notification, not surprising them."),
 
 dict(suite="Validation", id="TC-VAL-02", title="TC-VAL-02 Door/window sensor activation (user acceptance)", priority="critical", type="Non-functional – user acceptance",
  reqs="N1, N4, FR-DW-02, FR-DW-03, FR-DW-05, HS-02, HS-05",
@@ -150,7 +154,7 @@ dict(suite="Validation", id="TC-VAL-03", title="TC-VAL-03 Remote camera access a
         ("Participant opens Recordings and plays yesterday's alarm clip.", "Clip plays remotely within 5 s."),
         ("Tester on the LAN checks the network monitor on the router.", "Only an outbound TLS connection from the CCU to the cloud relay; no inbound connections; video session is encrypted (WebRTC/SRTP)."),
         ("Ask the participant to rate ease and usefulness (1–5).", "Rating ≥ 4.")],
- expected="Pass if remote login with MFA, live view (≤ 5 s start, ≤ 2 s latency) and clip playback work over mobile data with only outbound connections from the home, and the user rates it ≥ 4/5. Fail on login failure, start-up > 5 s, visible stalls > 3 s, or any inbound exposure."),
+ expected="The test passes when remote login with MFA, live view (≤ 5 s start, ≤ 2 s latency) and clip playback work over mobile data with only outbound connections from the home, and the user rates it ≥ 4/5. Fail on login failure, start-up > 5 s, visible stalls > 3 s, or any inbound exposure."),
 
 dict(suite="Validation", id="TC-VAL-04", title="TC-VAL-04 System arm/disarm functionality (user acceptance)", priority="critical", type="Non-functional – user acceptance / usability",
  reqs="N4, O4, FR-CC-01, UR-01, UR-02, MS-12, MS-13",
@@ -177,7 +181,8 @@ dict(suite="Validation", id="TC-VAL-05", title="TC-VAL-05 Simultaneous sensor tr
         ("Repeat with 5 sensors triggered simultaneously.", "Same behaviour; no event lost; latencies unchanged."),
         ("Run the load script injecting 20 events/s for 60 s while the system is armed and trigger a real sensor at second 30.", "The real trigger raises the alarm within 2 s; CPU on the CCU < 80 %; no dropped events (script count = log count)."),
         ("Disarm and open the event log.", "Every event from steps 1–4 is present with the correct zone and order; cameras of all triggered zones have alarm clips.")],
- expected="Pass if simultaneous and high-rate triggers produce no lost events, a single alarm with all zones, and siren ≤ 2 s / notification ≤ 5 s in every run. Fail if any event is missing, multiple separate alarms are raised, or latency exceeds the limits."),
+ expected="Passed when simultaneous and high-rate triggers produce no lost events, a single alarm with all zones, and siren ≤ 2 s / notification ≤ 5 s in every run. Fail if any event is missing, multiple separate alarms are raised, or latency exceeds the limits.",
+ notes="The load script injects events through the coordinator's test interface; never run it against a system that is in real use."),
 
 dict(suite="Validation", id="TC-VAL-06", title="TC-VAL-06 High-volume user access (load test)", priority="high", type="Non-functional – performance / load",
  reqs="PR-06, PR-04, FR-CC-07, SR-10",
@@ -190,7 +195,8 @@ dict(suite="Validation", id="TC-VAL-06", title="TC-VAL-06 High-volume user acces
         ("With all sessions active, trigger a water-leak sensor.", "Hazard alarm and notifications to all 3 phones within 5 s; no slowdown in the streams."),
         ("Increase to 10 concurrent sessions using the load tool (API clients polling status every second).", "95th-percentile API response ≤ 1 s local; CCU remains responsive; no client errors."),
         ("Run a burst of 100 requests/s against the local API for 30 s from one client.", "Requests are rate-limited (HTTP 429) but alarm processing and the other clients continue normally.")],
- expected="Pass if ≥ 3 devices operate concurrently with live video, control and log access within the specified response times, conflicting commands are handled safely, alarms are not delayed, and the API degrades gracefully under overload. Fail if any client sees > 2 s responses, a stream stalls, or an alarm is delayed."),
+ expected="Pass if ≥ 3 devices operate concurrently with live video, control and log access within the specified response times, conflicting commands are handled safely, alarms are not delayed, and the API degrades gracefully under overload. Fail if any client sees > 2 s responses, a stream stalls, or an alarm is delayed.",
+ notes="Screen-record each phone so the timings can be read back frame by frame instead of relying on a stopwatch."),
 
 dict(suite="Validation", id="TC-VAL-07", title="TC-VAL-07 Internet outage resilience (user need N3)", priority="high", type="Non-functional – reliability / availability",
  reqs="N3, FR-CC-04, FR-CC-09, FR-NT-04, FR-RM-04, RL-06",
@@ -213,7 +219,7 @@ dict(suite="Validation", id="TC-VAL-08", title="TC-VAL-08 Mains power failure an
         ("Leave the system on battery and check every 30 min.", "System, cameras and keypad remain operational for ≥ 4 h; battery percentage visible in the app."),
         ("Restore mains after 4 h.", "'Mains power restored' alert; UPS charging; no mode change."),
         ("Simulate a full power loss (remove UPS output for 1 min) and restore.", "CCU boots and is armed-capable within 90 s, restoring the previous mode (Armed Away) automatically.")],
- expected="Pass if the system runs ≥ 4 h on backup without loss of protection, reports the outage and restoration, and auto-recovers the previous mode within 90 s after a cold start. Fail otherwise."),
+ expected="Passed when the system runs ≥ 4 h on backup without loss of protection, reports the outage and restoration, and auto-recovers the previous mode within 90 s after a cold start. Fail otherwise."),
 
 dict(suite="Validation", id="TC-VAL-09", title="TC-VAL-09 Guest first-use disarm (usability)", priority="medium", type="Non-functional – usability",
  reqs="UR-04, FR-UA-07, FR-UA-06",
@@ -249,11 +255,14 @@ def body(t):
         L.append("")
     L.append("### Expected result")
     L.append(t["expected"])
+    if t.get("notes"):
+        L.append("")
+        L.append(f"**Notes:** {t['notes']}")
     return "\n".join(L)
 
 if __name__ == "__main__":
     import json, pathlib
-    out = ["# SHSS Test Cases — Verification and Validation", "",
+    out = ["# SHSS Test Cases: Verification and Validation", "",
            "Source for the Testomat project *Smart Home System*. Each test uses the format: name, objective, priority, type, precondition, steps with expected outcome per step, expected result. Requirement IDs refer to the SysRS.", ""]
     for suite in ("Verification", "Validation"):
         out.append(f"## Suite: {suite}"); out.append("")

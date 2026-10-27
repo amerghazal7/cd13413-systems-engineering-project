@@ -194,6 +194,16 @@ SHSS *-- "1..*" APP
 SHSS *-- "1" WEB
 SHSS *-- "0..*" KP
 
+note bottom of CLOUD
+  Deliberately thin cloud layer: the CCU works
+  without it. Choice justified in the decision
+  matrix "Server - Local vs Cloud".
+end note
+note bottom of Sensor
+  All battery devices use Zigbee 3.0 (see the
+  sensor and controller decision matrices).
+end note
+
 ' --- hidden links: force rows (layout only) ---
 CCU -[hidden]down-> LOCK
 PIR -[hidden]down-> KP

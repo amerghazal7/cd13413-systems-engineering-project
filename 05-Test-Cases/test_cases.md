@@ -1,4 +1,4 @@
-# SHSS Test Cases — Verification and Validation
+# SHSS Test Cases: Verification and Validation
 
 Source for the Testomat project *Smart Home System*. Each test uses the format: name, objective, priority, type, precondition, steps with expected outcome per step, expected result. Requirement IDs refer to the SysRS.
 
@@ -43,6 +43,8 @@ Source for the Testomat project *Smart Home System*. Each test uses the format: 
 ### Expected result
 The test passes if the sensor pairs, every motion/tamper/heartbeat event is received by the CCU within 1 s, motion is ignored in Disarmed and raises the alarm in Armed Away. It fails if any event is missing, delayed > 1 s, or the alarm is not raised when armed.
 
+**Notes:** In test mode the heartbeat interval can be shortened to 1 min so that step 7 does not take two hours. The Zigbee coordinator log gives millisecond timestamps, which is easier than a stopwatch.
+
 ---
 
 ## TC-V-02 Door/window sensor integration
@@ -82,7 +84,7 @@ The test passes if the sensor pairs, every motion/tamper/heartbeat event is rece
 *Expected:* Tamper event logged and notification sent.
 
 ### Expected result
-Pass if open/close events arrive within 1 s, the entry zone starts the entry delay and disarming within the delay prevents the alarm, the instant zone alarms immediately, open-zone arming is warned/blocked, and tamper is detected. Fail otherwise.
+I treat this as passed when open/close events arrive within 1 s, the entry zone starts the entry delay and disarming within the delay prevents the alarm, the instant zone alarms immediately, open-zone arming is warned/blocked, and tamper is detected. Fail otherwise.
 
 ---
 
@@ -166,6 +168,8 @@ Pass if water contact raises the hazard alarm within 5 s in Disarmed and Armed m
 ### Expected result
 Pass if discovery, live view (≤ 3 s first frame), alarm clip with correct pre/post-roll, export and stream-loss detection (≤ 30 s) all work. Fail if any step misses its timing or the clip is missing/unprotected.
 
+**Notes:** For the latency check in step 2, clap in front of the camera and count the seconds until the clap shows on screen; it is crude but repeatable.
+
 ---
 
 ## TC-V-05 Login functionality – correct credentials
@@ -246,6 +250,8 @@ Pass if valid credentials log in within 2 s locally, remote login requires and a
 ### Expected result
 Pass if wrong credentials are rejected generically, the 5-failure lockout and Admin notification occur for both password and PIN, the keypad tamper fires at 10 failures, and everything is logged. Fail if login succeeds with wrong credentials, the lock is not applied, or the error reveals account existence.
 
+**Notes:** Run this after TC-V-05 so the account is known to be good, and wait out the 15 min lock before any other test that uses resident1.
+
 ---
 
 ## TC-V-07 Smart lock controller integration
@@ -323,6 +329,8 @@ Pass if commands execute within 1 s, state is reported on manual changes, the au
 ### Expected result
 Pass if the siren sounds ≤ 2 s and the notification arrives ≤ 5 s with zone and snapshot, the user reaches live video in ≤ 2 taps, rates the experience ≥ 4/5, and the pet does not cause an alarm. Fail if timings are missed, the notification lacks actionable information, or a false alarm occurs.
 
+**Notes:** Agree the intruder's route and timing with the participant beforehand. The point is the participant's reaction to the notification, not surprising them.
+
 ---
 
 ## TC-VAL-02 Door/window sensor activation (user acceptance)
@@ -396,7 +404,7 @@ Pass if both participants disarm within the entry delay at first attempt, the wi
 *Expected:* Rating ≥ 4.
 
 ### Expected result
-Pass if remote login with MFA, live view (≤ 5 s start, ≤ 2 s latency) and clip playback work over mobile data with only outbound connections from the home, and the user rates it ≥ 4/5. Fail on login failure, start-up > 5 s, visible stalls > 3 s, or any inbound exposure.
+The test passes when remote login with MFA, live view (≤ 5 s start, ≤ 2 s latency) and clip playback work over mobile data with only outbound connections from the home, and the user rates it ≥ 4/5. Fail on login failure, start-up > 5 s, visible stalls > 3 s, or any inbound exposure.
 
 ---
 
@@ -471,7 +479,9 @@ Pass if all arm/disarm methods work at first attempt within the time limits, the
 *Expected:* Every event from steps 1–4 is present with the correct zone and order; cameras of all triggered zones have alarm clips.
 
 ### Expected result
-Pass if simultaneous and high-rate triggers produce no lost events, a single alarm with all zones, and siren ≤ 2 s / notification ≤ 5 s in every run. Fail if any event is missing, multiple separate alarms are raised, or latency exceeds the limits.
+Passed when simultaneous and high-rate triggers produce no lost events, a single alarm with all zones, and siren ≤ 2 s / notification ≤ 5 s in every run. Fail if any event is missing, multiple separate alarms are raised, or latency exceeds the limits.
+
+**Notes:** The load script injects events through the coordinator's test interface; never run it against a system that is in real use.
 
 ---
 
@@ -509,6 +519,8 @@ Pass if simultaneous and high-rate triggers produce no lost events, a single ala
 
 ### Expected result
 Pass if ≥ 3 devices operate concurrently with live video, control and log access within the specified response times, conflicting commands are handled safely, alarms are not delayed, and the API degrades gracefully under overload. Fail if any client sees > 2 s responses, a stream stalls, or an alarm is delayed.
+
+**Notes:** Screen-record each phone so the timings can be read back frame by frame instead of relying on a stopwatch.
 
 ---
 
@@ -575,7 +587,7 @@ Pass if detection, siren, local control and local video are unaffected, notifica
 *Expected:* CCU boots and is armed-capable within 90 s, restoring the previous mode (Armed Away) automatically.
 
 ### Expected result
-Pass if the system runs ≥ 4 h on backup without loss of protection, reports the outage and restoration, and auto-recovers the previous mode within 90 s after a cold start. Fail otherwise.
+Passed when the system runs ≥ 4 h on backup without loss of protection, reports the outage and restoration, and auto-recovers the previous mode within 90 s after a cold start. Fail otherwise.
 
 ---
 
