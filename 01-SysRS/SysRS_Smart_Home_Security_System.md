@@ -19,9 +19,7 @@ title: "System Requirements Specification: Smart Home Security System (SHSS)"
 
 | Version | Date | Description |
 |---|---|---|
-| 0.1 | 20 Oct 2026 | First draft after reading the project brief: purpose, scope, needs table, user types |
-| 0.5 | 24 Oct 2026 | Requirement tables added; interfaces and modes reworked after drawing the ibd and the state machine; technology choices aligned with the decision matrices |
-| 1.0 | 27 Oct 2026 | Verification section, assumptions and open issues added; IDs renumbered; proof-read |
+| 1.0 | 27 Oct 2026 | First issue, prepared for the capstone submission |
 
 ### About this document
 
@@ -29,9 +27,9 @@ This specification is the first of the five deliverables of my capstone project.
 
 A few things worth knowing before reading on:
 
-* The figures are rendered from the same SysML models (PlantUML) that I submit separately, so block names, port names and state names in the text match the diagrams. When I renamed something in a diagram I renamed it here as well, which is why some identifiers look a little long.
-* Most of the numbers (latencies, battery life, MTBF, storage sizes) are design targets, not measurements. I took them from data sheets of typical Zigbee 3.0 sensors, PoE cameras and small Linux boards and rounded them to values that are easy to check with a stopwatch or a log file. Where I am unsure I say so in Section 10.3.
-* The technology choices referenced throughout (Zigbee for sensors and actuators, PoE cameras, a local-first server with a thin cloud relay) are the outcome of the decision matrices in deliverable 4. I wrote the first draft of this document before finishing the matrices and had to revise Sections 2, 6 and 8 afterwards; the revision history reflects that.
+* The figures are rendered from the same SysML models (PlantUML) that I submit separately, so block names, port names and state names in the text match the diagrams. Some identifiers look a little long for that reason.
+* Most of the numbers (latencies, battery life, MTBF, storage sizes) are design targets, not measurements. They are based on typical published figures for Zigbee 3.0 sensors, PoE cameras and small Linux boards, rounded to values that are easy to check with a stopwatch or a log file. Where I am unsure I say so in Section 10.3.
+* The technology choices referenced throughout (Zigbee for sensors and actuators, PoE cameras, a local-first server with a thin cloud relay) are the outcome of the decision matrices in deliverable 4. The matrices and this document were developed together, so Sections 2, 6 and 8 already reflect their outcome.
 
 ### Conventions used in this document
 
@@ -48,7 +46,7 @@ A few things worth knowing before reading on:
 
 The Smart Home Security System (SHSS) is being developed to protect a private home, the people in it and their belongings against intrusion and against the everyday hazards that cause most domestic damage: water leaks, smoke and carbon monoxide. Just as important, it has to give the occupants a reliable and timely picture of what is going on at home, both from inside the house and from their phone when they are away.
 
-Why build another security system? When I looked at what a typical household can buy today, every option left something out:
+Why build another security system? The options a typical household can buy today each leave something out:
 
 * Traditional monitored alarm panels are dependable, but they are closed systems. Adding a camera or a new sensor usually means calling the installer, and the only "remote access" is a phone call from the monitoring centre.
 * Consumer cloud cameras and plug-in sensors are easy to set up, but they stop working the moment the internet drops, they need a subscription for anything useful, and they send video of your living room to someone else's servers by default.
@@ -75,16 +73,16 @@ The system to be produced is the **Smart Home Security System (SHSS)**, comprisi
 
 #### b) Needs analysis and the user's problem
 
-Before writing any requirement I did a short, informal needs analysis. I talked to the people in my own household and to two neighbouring families, one with an old alarm panel and one with a couple of cloud cameras, and to a technician who installs alarm systems for a living. I also read through the one-star reviews of three popular consumer systems, which turned out to be the richest source of "what must not happen". The findings, in the users' own words where I could keep them, are summarised below.
+I did not run user interviews for this project. The needs below are my reading of the project brief together with the problems that are commonly reported with existing home security products: false alarms, dependence on the internet, subscriptions and privacy. I have written them as needs rather than as requirements so that the validation scenarios in Section 9 have something user-facing to go back to.
 
-| Need | What I heard |
+| Need | Description |
 |---|---|
-| N1: Detect intrusion reliably | "Every door and window, and the hallway, and please no alarm every time the cat jumps on the sofa." False alarms from pets, heating vents and curtains came up in every conversation. |
-| N2: React immediately | A loud siren plus a phone notification within seconds. Everyone wanted to see a picture or live video before deciding whether to call the police. |
-| N3: Work when the internet is down | "If the internet goes down I want it to still work" was the single most common comment. People do not trust a system that depends on their ISP or on a vendor's servers. |
-| N4: Be simple to live with | Arming and disarming must take seconds, from the phone, from a keypad by the door, and automatically at night. Teenagers, grandparents and the cleaner all have to be able to use it. |
+| N1: Detect intrusion reliably | Every door and window and the main living areas must be covered, with very few false alarms. Pets, heating vents and curtains are the usual false-alarm sources. |
+| N2: React immediately | A loud siren plus a phone notification within seconds. The user wants to see a picture or live video before deciding whether to call the police. |
+| N3: Work when the internet is down | The system has to keep protecting the home when the internet is down. A system that depends on the ISP or on a vendor's servers cannot be trusted for security. |
+| N4: Be simple to live with | Arming and disarming must take seconds, from the phone, from a keypad by the door, and automatically at night. Teenagers, grandparents and a cleaner all have to be able to use it. |
 | N5: Keep data private | Video and event history should stay in the house unless the owner decides otherwise; remote access must be properly authenticated. |
-| N6: Grow with the home | "I want to start with the doors and add cameras next year", without replacing the controller. |
+| N6: Grow with the home | Start with a few sensors and add cameras and devices later, without replacing the controller. |
 | N7: Be affordable to own | No compulsory monthly fee for the basic function; professional monitoring as an option, not a requirement. |
 
 **What the system will do**: detect intrusion and environmental hazards, raise local alarms, notify users and (optionally) a monitoring centre, record and stream video, control locks, lights and garage doors in response to events or user commands, support arming modes and schedules, authenticate users with role-based permissions, keep an audit log, keep working on battery and cellular backup during outages, and be expandable.
@@ -325,7 +323,7 @@ Usability was the hardest section to make measurable. I ended up defining four c
 
 ## 5. Performance Requirements
 
-The performance numbers below are the ones I expect a reviewer to challenge first, so a word on where they come from. The 1 s sensor latency and 2 s siren latency are what Zigbee 3.0 devices and a Linux rules engine can comfortably achieve; EN 50131 allows up to 10 s for an intrusion alarm, so there is margin. The video figures come from typical ONVIF camera and WebRTC behaviour. The endurance figures are rounded from supplier data sheets.
+The performance numbers below are the ones I expect a reviewer to challenge first, so a word on where they come from. The 1 s sensor latency and 2 s siren latency are what Zigbee 3.0 devices and a Linux rules engine can comfortably achieve. The video figures come from typical ONVIF camera and WebRTC behaviour. The endurance figures are rounded from typical published specifications.
 
 ### 5.1. Dynamic performance
 
@@ -417,7 +415,7 @@ Applicable documents: ISO 9241-110 (dialogue principles), ISO 9241-210 (human-ce
 
 ### 7.2. Maintainability
 
-The maintainability targets assume the "reference installation" I use throughout the project: a three-bedroom house with 1 CCU, 12 sensors, 4 cameras, 1 keypad, 2 sirens and 1 smart lock. All repair times include the walk to the device and the re-pairing step, which in my experience is where most of the time actually goes.
+The maintainability targets assume the "reference installation" I use throughout the project: a three-bedroom house with 1 CCU, 12 sensors, 4 cameras, 1 keypad, 2 sirens and 1 smart lock. All repair times include the walk to the device and the re-pairing step, since that is where most of the time goes.
 
 | ID | Requirement | Pri. | Ver. |
 |---|---|---|---|
@@ -434,7 +432,7 @@ The maintainability targets assume the "reference installation" I use throughout
 
 ### 7.3. Reliability
 
-Reliability requirements apply in the environmental conditions of Section 8.3 with the preventive maintenance of §7.2. The MTBF values are typical of consumer electronics of this class and were cross-checked against supplier data; the apportionment in RL-09 was done top-down from the 99.9 % availability target.
+Reliability requirements apply in the environmental conditions of Section 8.3 with the preventive maintenance of §7.2. The MTBF values are typical published figures for consumer electronics of this class; the apportionment in RL-09 was done top-down from the 99.9 % availability target.
 
 | ID | Requirement | Pri. | Ver. |
 |---|---|---|---|
