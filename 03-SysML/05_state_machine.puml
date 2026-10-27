@@ -1,0 +1,62 @@
+@startuml 05_state_machine
+' SysML State Machine Diagram — system modes and states
+title stm [Block] Smart Home Security System — Modes & States
+skinparam state {
+  BackgroundColor #F8FAFF
+  BorderColor #2F4F7F
+}
+
+[*] --> Setup : power on, first boot
+state "Setup / Pairing" as Setup
+Setup --> Disarmed : configuration complete
+
+state "Operational" as Op {
+  state "Disarmed" as Disarmed
+  state "Exit Delay" as ExitDelay
+  state "Armed" as Armed {
+    state "Armed Away" as Away
+    state "Armed Home (Stay)" as Home
+    state "Armed Night" as Night
+    [*] --> Away
+  }
+  state "Entry Delay" as EntryDelay
+  state "Alarm (Triggered)" as Alarm {
+    state "Siren active" as Siren
+    state "Notifying users" as Notify
+    state "Recording clips" as Rec
+    [*] --> Siren
+    [*] --> Notify
+    [*] --> Rec
+  }
+
+  Disarmed --> ExitDelay : arm(mode) [user authenticated]
+  ExitDelay --> Armed : exit timer expired (30–60 s)
+  ExitDelay --> Disarmed : cancel
+  Armed --> EntryDelay : entry-zone sensor tripped\n(door contact)
+  Armed --> Alarm : instant-zone sensor tripped\n(motion, glass-break, tamper)
+  EntryDelay --> Disarmed : valid PIN / app disarm\nwithin 30 s
+  EntryDelay --> Alarm : timer expired
+  Alarm --> Disarmed : disarm(pin) [valid]
+  Alarm --> Armed : siren timeout (5 min)\nand auto-rearm
+  Armed --> Disarmed : disarm(pin) [valid]
+  Home --> Night : schedule 23:00
+  Night --> Home : schedule 06:00
+}
+state "24 h Zones (always active)" as Safety {
+  state "Monitoring hazards" as Haz
+  Haz : water leak, smoke / CO, tamper, panic
+}
+Op --> Alarm : hazard detected [any mode]
+
+state "Degraded / Fault" as Fault
+Fault : mains lost → on UPS
+Fault : internet lost → LTE backup
+Fault : sensor offline / low battery
+Op --> Fault : fault detected
+Fault --> Op : fault cleared
+state "Maintenance / Test" as Maint
+Maint : sirens muted, sensors reported only
+Disarmed --> Maint : installer login
+Maint --> Disarmed : exit test mode
+Op --> [*] : shutdown (admin)
+@enduml

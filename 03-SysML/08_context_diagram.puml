@@ -1,0 +1,43 @@
+@startuml 08_context_diagram
+' System Context Diagram — SHSS boundary, actors and external systems
+title System Context — Smart Home Security System
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+left to right direction
+
+actor "Homeowner / Admin" as Admin
+actor "Resident" as Res
+actor "Guest" as Guest
+actor "Installer /\nMaintainer" as Inst
+
+rectangle "Smart Home Security System (SHSS)\n— system boundary —" as SYS #F4F6FB {
+  rectangle "Central Control Unit\n(Smart Home Manager)" as CCU #DDEBF7
+  rectangle "Sensors" as SEN #E2F0D9
+  rectangle "Cameras" as CAM #E2F0D9
+  rectangle "Alarm (sirens, strobe)" as ALM #FCE4D6
+  rectangle "Controllers\n(lock, lights, garage)" as ACT #FFF2CC
+  rectangle "User Interfaces\n(app, web, keypad)" as UI #EDE7F6
+  rectangle "Power (PSU, UPS,\nPoE, batteries)" as PWR #EEEEEE
+}
+
+cloud "Cloud Services\n(relay, push, auth,\nbackup, OTA)" as CL #F3E5F5
+rectangle "Home Network\n& ISP Internet" as NET #EEEEEE
+rectangle "Mains Power\n(utility)" as MAINS #EEEEEE
+rectangle "Professional\nMonitoring Center" as MON #FFE0E0
+rectangle "Mobile OS push\n(FCM / APNs)" as PUSH #F3E5F5
+rectangle "Emergency Services\n(via monitoring)" as EMS #FFE0E0
+rectangle "Smart Home Ecosystem\n(voice assistant, Matter)" as ECO #EEEEEE
+
+Admin --> UI : arm/disarm, configure,\nmanage users, view video
+Res --> UI : arm/disarm, view,\ncontrol devices
+Guest --> UI : temporary PIN / access
+Inst --> CCU : install, pair,\ntest mode, maintain
+SYS <--> NET : Ethernet / Wi-Fi
+NET <--> CL : TLS (outbound)
+CL --> PUSH : notifications
+CL <--> MON : alarm reports\n(LTE backup direct)
+MON --> EMS : dispatch
+MAINS --> PWR : 100–240 V AC
+ECO <..> CCU : optional\nintegration
+CL ..> UI : remote access\n(app / web)
+@enduml

@@ -1,0 +1,203 @@
+@startuml 01_bdd_system_blocks
+' SysML Block Definition Diagram (bdd) — Smart Home Security System (SHSS)
+title bdd [Package] SHSS Structure — Block Definition Diagram
+skinparam linetype polyline
+skinparam nodesep 25
+skinparam ranksep 45
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #F8FAFF
+  BorderColor #2F4F7F
+  ArrowColor #2F4F7F
+}
+hide circle
+
+class "Smart Home Security System" as SHSS <<block>> {
+  values
+  --
+  mode : SystemMode
+  armedZones : Zone[*]
+  --
+  operations
+  --
+  arm(mode)
+  disarm(pin)
+  raiseAlarm(event)
+}
+
+package "Central Control Unit" {
+  class "Control Unit (CCU)" as CCU <<block>> {
+    values
+    --
+    cpu : ARM Cortex-A76 / x86 N100
+    ram : 8 GB
+    os : Linux
+    --
+    parts
+    --
+    rulesEngine : Alarm & Rules Engine
+    api : REST/WebSocket API
+    mqtt : MQTT Broker
+    db : PostgreSQL Database
+    nvr : NVR Video Service
+    storage : SSD 2 TB (encrypted)
+    zigbee : Zigbee 3.0 Coordinator
+    lte : LTE Backup Modem
+  }
+}
+
+package "Sensors" {
+  class "Sensor" as Sensor <<block>> {
+    values
+    --
+    id : UUID
+    batteryLevel : %
+    protocol : Zigbee 3.0
+    --
+    operations
+    --
+    report(event)
+    heartbeat()
+  }
+  class "PIR Motion Sensor" as PIR <<block>> {
+    range : 10 m / 110°
+    petImmunity : <= 25 kg
+  }
+  class "Door/Window Contact" as DW <<block>> {
+    type : magnetic reed
+    tamperSwitch : Boolean
+  }
+  class "Water Leak Sensor" as WL <<block>> {
+    probeLength : 1.5 m
+  }
+  class "Glass-Break Sensor" as GB <<block>> {
+    acousticRange : 7 m
+  }
+  class "Smoke / CO Detector" as SM <<block>> {
+    standard : EN 14604 / UL 217
+  }
+}
+
+package "Cameras" {
+  class "IP Camera (PoE)" as CAM <<block>> {
+    values
+    --
+    resolution : 1080p..4K
+    nightVision : IR 30 m
+    protocol : ONVIF / RTSP
+    power : PoE 802.3af
+    --
+    operations
+    --
+    streamLive()
+    recordClip(trigger)
+  }
+  class "Video Doorbell" as DB <<block>>
+}
+
+package "Alarm System" {
+  class "Alarm Subsystem" as ALM <<block>> {
+    operations
+    --
+    sound(siren)
+    flash(strobe)
+    notify(users)
+    reportToMonitoring()
+  }
+  class "Indoor Siren" as SIR <<block>> {
+    level : >= 95 dB
+    protocol : Zigbee 3.0
+  }
+  class "Outdoor Siren + Strobe" as OSIR <<block>> {
+    level : >= 110 dB
+    interface : 12 V relay (wired)
+  }
+}
+
+package "Controllers / Actuators" {
+  class "Smart Door Lock" as LOCK <<block>> {
+    protocol : Zigbee 3.0
+  }
+  class "Smart Light / Plug" as LIGHT <<block>> {
+    protocol : Zigbee 3.0 (router)
+  }
+  class "Garage / Gate Relay" as GAR <<block>> {
+    protocol : Zigbee 3.0
+  }
+}
+
+package "User Interface" {
+  class "Mobile App" as APP <<block>> {
+    platform : iOS / Android
+    transport : HTTPS / WSS
+  }
+  class "Web Dashboard" as WEB <<block>> {
+    transport : HTTPS / WSS
+  }
+  class "Wall Keypad / Touch Panel" as KP <<block>> {
+    transport : Ethernet (PoE) / Wi-Fi
+    auth : PIN, NFC tag
+  }
+}
+
+package "Power Supply" {
+  class "Power Subsystem" as PWR <<block>> {
+    mains : 100–240 V AC
+    psu : 12 V / 5 V DC
+    ups : >= 4 h backup
+    poe : 802.3af/at switch on UPS
+    sensorBattery : CR2450 / AA, >= 2 years
+  }
+}
+
+package "Cloud Services" {
+  class "Cloud Platform" as CLOUD <<block>> {
+    parts
+    --
+    relay : Remote Access Relay (TLS, WebRTC TURN)
+    push : Push Notification (FCM/APNs)
+    auth : Identity Service (OIDC, MFA)
+    backup : Encrypted Backup
+    ota : OTA Update Service
+    monitoring : Professional Monitoring API
+  }
+}
+
+class "Home Network" as NET <<block>> {
+  router : Gigabit / Wi-Fi 6
+  internet : ISP uplink
+}
+
+' composition
+SHSS *-- "1" CCU
+SHSS *-- "1..*" Sensor
+SHSS *-- "0..*" CAM
+SHSS *-- "0..1" DB
+SHSS *-- "1" ALM
+SHSS *-- "0..*" LOCK
+SHSS *-- "0..*" LIGHT
+SHSS *-- "0..*" GAR
+SHSS *-- "1" PWR
+SHSS *-- "1" NET
+SHSS o-- "1" CLOUD : uses >
+
+Sensor <|-- PIR
+Sensor <|-- DW
+Sensor <|-- WL
+Sensor <|-- GB
+Sensor <|-- SM
+
+ALM *-- "1..*" SIR
+ALM *-- "0..1" OSIR
+
+SHSS *-- "1..*" APP
+SHSS *-- "1" WEB
+SHSS *-- "0..*" KP
+
+' --- hidden links: force rows (layout only) ---
+CCU -[hidden]down-> LOCK
+PIR -[hidden]down-> KP
+CAM -[hidden]down-> PWR
+ALM -[hidden]down-> CLOUD
+DW -[hidden]right-> NET
+@enduml

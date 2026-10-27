@@ -1,0 +1,44 @@
+@startuml 06_seq_intrusion_alarm
+' Sequence Diagram — intrusion detected while Armed Away
+title sd Intrusion detection, alarm and notification (Armed Away)
+autonumber
+skinparam sequenceMessageAlign center
+actor Intruder
+participant "Door/Window\nContact" as DW
+participant "PIR Motion\nSensor" as PIR
+participant "Zigbee\nCoordinator" as ZB
+participant "Rules & Alarm\nEngine (CCU)" as RE
+participant "NVR / Camera" as NVR
+participant "Sirens" as SIR
+participant "Cloud Push /\nRelay" as CL
+actor "Homeowner\n(Mobile App)" as USR
+participant "Monitoring\nCenter" as MON
+
+Intruder -> DW : opens front door
+DW -> ZB : contact OPEN (AES-128)
+ZB -> RE : event(door, open)
+RE -> RE : mode = Armed Away\nzone = entry → start entry delay (30 s)
+RE -> NVR : pre-roll buffer, tag event
+RE -> CL : "Entry delay started" (info)
+CL -> USR : push notification
+Intruder -> PIR : moves in hallway
+PIR -> ZB : motion DETECTED
+ZB -> RE : event(motion, hallway)
+RE -> RE : instant zone while in entry delay\n→ confirmed intrusion
+RE -> SIR : activate (indoor Zigbee + outdoor 12 V)
+note right of SIR : <= 2 s after trigger
+RE -> NVR : record clip (-10 s / +30 s)
+RE -> CL : ALARM event + snapshot
+CL -> USR : push "Intrusion – Hallway"\n(<= 5 s)
+RE -> MON : alarm report (TLS, LTE fallback)
+USR -> CL : open live view
+CL -> NVR : WebRTC session via relay
+NVR -> USR : live stream
+USR -> RE : disarm(PIN) / confirm alarm
+alt valid PIN
+  RE -> SIR : stop
+  RE -> MON : cancel / user verified
+else timeout 5 min
+  RE -> SIR : stop (siren timeout) and re-arm
+end
+@enduml

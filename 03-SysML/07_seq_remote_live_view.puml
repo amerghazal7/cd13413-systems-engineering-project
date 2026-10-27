@@ -1,0 +1,33 @@
+@startuml 07_seq_remote_live_view
+' Sequence Diagram — remote camera live view with authentication
+title sd Remote login and camera live view
+autonumber
+actor "Resident\n(Mobile App)" as USR
+participant "Cloud Identity\n(OIDC + MFA)" as AUTH
+participant "Cloud Relay" as REL
+participant "CCU API" as API
+participant "NVR Service" as NVR
+participant "IP Camera\n(PoE)" as CAM
+
+USR -> AUTH : login(email, password)
+AUTH --> USR : MFA challenge
+USR -> AUTH : OTP code
+alt credentials valid
+  AUTH --> USR : access token (JWT, 1 h)
+else invalid (5th failure)
+  AUTH --> USR : account locked 15 min\n+ admin notified
+end
+USR -> REL : GET /cameras (Bearer token)
+REL -> API : forward over TLS tunnel
+API -> API : validate token, check role
+API --> USR : camera list
+USR -> REL : start live view (cam-02)
+REL -> API : createSession(cam-02)
+API -> NVR : open stream
+NVR -> CAM : RTSP DESCRIBE/PLAY
+CAM --> NVR : H.264/H.265 stream
+NVR --> REL : WebRTC (SRTP) via TURN
+REL --> USR : live video (<= 3 s to first frame)
+USR -> API : stop
+API -> NVR : close session, log access (audit)
+@enduml

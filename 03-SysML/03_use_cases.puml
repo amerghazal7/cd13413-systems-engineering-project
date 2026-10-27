@@ -1,0 +1,81 @@
+@startuml 03_use_cases
+' SysML / UML Use Case Diagram
+' Actor generalisation: Admin can do everything a Resident can; a Resident everything a Guest can.
+title uc [Package] SHSS Use Cases
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam nodesep 10
+skinparam ranksep 60
+skinparam usecase {
+  BackgroundColor #F8FAFF
+  BorderColor #2F4F7F
+}
+
+actor "Guest" as Guest
+actor "Resident" as Res
+actor "Homeowner / Admin" as Admin
+actor "Installer / Maintainer" as Inst
+actor "Monitoring Center" as Mon <<external>>
+actor "Cloud Services" as Cloud <<external>>
+
+Res --|> Guest
+Admin --|> Res
+
+rectangle "Smart Home Security System" {
+  usecase "Authenticate\n(login, MFA, PIN)" as UC_Auth
+  usecase "Disarm system" as UC_Disarm
+  usecase "Control devices\n(lock, lights, garage)" as UC_Ctrl
+  usecase "Arm system\n(Away / Home / Night)" as UC_Arm
+  usecase "View live camera feed" as UC_Live
+  usecase "View event log /\naudit trail" as UC_Log
+  usecase "Record & review\nvideo clips" as UC_Rec
+  usecase "Manage users &\npermissions" as UC_Users
+  usecase "Grant temporary access" as UC_Temp
+  usecase "Configure zones,\nrules & schedules" as UC_Cfg
+  usecase "Receive system health\n& fault alerts" as UC_Health
+  usecase "Apply software\nupdates (OTA)" as UC_OTA
+  usecase "Install & pair devices" as UC_Pair
+  usecase "Run maintenance /\ntest mode" as UC_Maint
+  usecase "Detect intrusion\n(motion / door / glass)" as UC_Detect
+  usecase "Detect environmental hazard\n(water leak, smoke / CO)" as UC_Env
+  usecase "Raise alarm\n(siren, strobe)" as UC_Alarm
+  usecase "Send notification\n(push, SMS, call)" as UC_Notify
+  usecase "Report alarm\nto monitoring" as UC_Report
+}
+
+Guest --> UC_Disarm
+Guest --> UC_Ctrl
+
+Res --> UC_Arm
+Res --> UC_Live
+Res --> UC_Log
+
+Admin --> UC_Rec
+Admin --> UC_Users
+Admin --> UC_Temp
+Admin --> UC_Cfg
+Admin --> UC_Health
+Admin --> UC_OTA
+
+Inst --> UC_Pair
+Inst --> UC_Maint
+Inst --> UC_Health
+
+UC_Arm ..> UC_Auth : <<include>>
+UC_Disarm ..> UC_Auth : <<include>>
+UC_Ctrl ..> UC_Auth : <<include>>
+UC_Live ..> UC_Auth : <<include>>
+UC_Users ..> UC_Auth : <<include>>
+UC_Detect ..> UC_Alarm : <<include>>
+UC_Env ..> UC_Alarm : <<include>>
+UC_Alarm ..> UC_Notify : <<include>>
+UC_Alarm ..> UC_Rec : <<include>>
+UC_Alarm ..> UC_Report : <<extend>>
+UC_Detect ..> UC_Live : <<extend>>
+
+UC_Report --> Mon
+UC_Notify --> Cloud
+UC_OTA --> Cloud
+UC_Live --> Cloud : remote access
+@enduml

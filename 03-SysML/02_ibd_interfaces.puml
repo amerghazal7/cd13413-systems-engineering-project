@@ -1,0 +1,67 @@
+@startuml 02_ibd_interfaces
+' SysML Internal Block Diagram (ibd) — connectors & protocols between parts
+title ibd [Block] Smart Home Security System — Internal Block Diagram (interfaces)
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+rectangle "Smart Home Security System" as SYS #F4F6FB {
+  rectangle "ccu : Control Unit\n(Smart Home Manager)" as CCU #DDEBF7 {
+    component "rulesEngine" as RE
+    component "api : REST/WSS" as API
+    component "mqtt : Broker" as MQ
+    component "db : PostgreSQL" as DBX
+    component "nvr : Video Service" as NVR
+    component "zigbee : Coordinator" as ZB
+    component "lte : Backup Modem" as LTE
+    component "relayOut : 12 V" as RLY
+  }
+  rectangle "sensors : Sensor[*]\n(PIR, contact, leak,\nglass-break, smoke/CO)" as SEN #E2F0D9
+  rectangle "cameras : IP Camera[*]\n+ doorbell" as CAM #E2F0D9
+  rectangle "actuators\n(lock, lights, garage)" as ACT #FFF2CC
+  rectangle "indoorSiren" as SIR #FCE4D6
+  rectangle "outdoorSiren + strobe" as OSIR #FCE4D6
+  rectangle "keypad : Wall Panel" as KP #EDE7F6
+  rectangle "poeSwitch (on UPS)" as POE #EEEEEE
+  rectangle "router : Home Router" as RT #EEEEEE
+  rectangle "power : PSU + UPS" as PWR #EEEEEE
+}
+
+cloud "Cloud Services" as CL #F3E5F5 {
+  component "relay : Remote Access" as CRELAY
+  component "push : FCM/APNs" as CPUSH
+  component "auth : OIDC/MFA" as CAUTH
+  component "backup / OTA" as CBK
+  component "monitoring API" as CMON
+}
+actor "Homeowner /\nResident" as USR
+rectangle "mobileApp" as APP #EDE7F6
+rectangle "webDashboard" as WEB #EDE7F6
+
+SEN -right-> ZB : Zigbee 3.0\n(AES-128, battery)
+ZB --> MQ : events
+MQ --> RE
+RE --> DBX : log / config
+RE --> API
+NVR --> DBX
+CAM --> POE : Ethernet PoE\nRTSP / ONVIF
+POE --> NVR : Ethernet
+ACT <-- ZB : Zigbee 3.0\ncommands
+SIR <-- ZB : Zigbee 3.0
+OSIR <-- RLY : 12 V wired
+KP --> API : Ethernet(PoE)/Wi-Fi\nHTTPS/WSS
+PWR --> CCU : 12 V DC
+PWR --> POE : AC (UPS)
+API --> RT : Ethernet
+RT --> CRELAY : TLS tunnel\n(outbound only)
+LTE ..> CMON : LTE backup\n(alarm reporting)
+RE --> CPUSH : alarm events\n(HTTPS)
+CRELAY --> APP : HTTPS/WSS\nWebRTC (video)
+CRELAY --> WEB : HTTPS/WSS
+APP --> CAUTH : OIDC login\n(MFA)
+RT ..> APP : LAN direct\n(Wi-Fi, HTTPS)
+RE --> CBK : encrypted\nbackup / OTA
+USR --> APP
+USR --> WEB
+USR --> KP
+@enduml

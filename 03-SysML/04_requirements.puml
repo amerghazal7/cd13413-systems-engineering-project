@@ -1,0 +1,111 @@
+@startuml 04_requirements
+' SysML Requirement Diagram — key requirements and their relationships
+title req [Package] SHSS Requirements (excerpt) — derive / satisfy / verify
+skinparam linetype ortho
+skinparam class {
+  BackgroundColor #FFFBE6
+  BorderColor #8A6D3B
+}
+hide circle
+hide methods
+
+class "SYS-01 Protect the home" as SYS01 <<requirement>> {
+  id = SYS-01
+  text = The SHSS shall detect intrusion and
+  environmental hazards and alert the
+  occupants within the required time.
+}
+class "FR-MD-01 Motion detection" as MD01 <<requirement>> {
+  id = FR-MD-01
+  text = Detect human motion in a covered
+  zone and report within 1 s.
+}
+class "FR-MD-03 Pet immunity" as MD03 <<requirement>> {
+  id = FR-MD-03
+  text = Ignore animals up to 25 kg.
+}
+class "FR-VS-02 Live view" as VS02 <<requirement>> {
+  id = FR-VS-02
+  text = Stream live video to an authorised
+  user, locally and remotely.
+}
+class "FR-VS-03 Event recording" as VS03 <<requirement>> {
+  id = FR-VS-03
+  text = Record a clip from 10 s before to
+  30 s after an alarm event.
+}
+class "FR-AL-01 Alarm activation" as AL01 <<requirement>> {
+  id = FR-AL-01
+  text = Sound sirens and notify all users
+  within 5 s of a confirmed trigger.
+}
+class "FR-CC-01 Modes" as CC01 <<requirement>> {
+  id = FR-CC-01
+  text = Support Disarmed, Armed Away,
+  Armed Home and Armed Night modes.
+}
+class "FR-CC-04 Offline operation" as CC04 <<requirement>> {
+  id = FR-CC-04
+  text = Detection, alarm and local control
+  shall work without internet.
+}
+class "FR-UA-01 Authentication" as UA01 <<requirement>> {
+  id = FR-UA-01
+  text = Authenticate every user; lock the
+  account after 5 failed attempts.
+}
+class "PR-02 Alarm latency" as PR02 <<requirement>> {
+  id = PR-02
+  text = Sensor trigger to siren <= 2 s;
+  push notification <= 5 s.
+}
+class "SR-02 Encryption" as SR02 <<requirement>> {
+  id = SR-02
+  {field} text = All links encrypted: TLS 1.3,
+  {field} Zigbee AES-128.
+}
+class "RL-01 Availability" as RL01 <<requirement>> {
+  id = RL-01
+  text = CCU availability >= 99.9 %;
+  4 h operation on backup power.
+}
+
+class "Control Unit" as CCU <<block>>
+class "PIR Motion Sensor" as PIR <<block>>
+class "IP Camera (PoE)" as CAM <<block>>
+class "Alarm Subsystem" as ALM <<block>>
+class "Power Subsystem (UPS)" as PWR <<block>>
+class "TC-V-01 Motion sensor\nintegration" as TCV01 <<testCase>>
+class "TC-V-04 Camera\nintegration" as TCV04 <<testCase>>
+class "TC-V-05 Login\nsuccess / fail" as TCV05 <<testCase>>
+class "TC-VAL-01 Motion detection\n& notification" as TCVAL01 <<testCase>>
+class "TC-VAL-05 Simultaneous\nsensor triggers" as TCVAL05 <<testCase>>
+
+SYS01 <.. MD01 : <<deriveReqt>>
+SYS01 <.. VS02 : <<deriveReqt>>
+SYS01 <.. AL01 : <<deriveReqt>>
+SYS01 <.. CC01 : <<deriveReqt>>
+SYS01 <.. CC04 : <<deriveReqt>>
+MD01 <.. MD03 : <<deriveReqt>>
+VS02 <.. VS03 : <<deriveReqt>>
+AL01 <.. PR02 : <<refine>>
+CC04 <.. RL01 : <<deriveReqt>>
+UA01 <.. SR02 : <<deriveReqt>>
+
+PIR ..> MD01 : <<satisfy>>
+PIR ..> MD03 : <<satisfy>>
+CAM ..> VS02 : <<satisfy>>
+CCU ..> VS03 : <<satisfy>>
+ALM ..> AL01 : <<satisfy>>
+CCU ..> CC01 : <<satisfy>>
+CCU ..> CC04 : <<satisfy>>
+CCU ..> UA01 : <<satisfy>>
+PWR ..> RL01 : <<satisfy>>
+
+TCV01 ..> MD01 : <<verify>>
+TCV04 ..> VS02 : <<verify>>
+TCV05 ..> UA01 : <<verify>>
+TCVAL01 ..> AL01 : <<verify>>
+TCVAL01 ..> PR02 : <<verify>>
+TCVAL05 ..> PR02 : <<verify>>
+@enduml
